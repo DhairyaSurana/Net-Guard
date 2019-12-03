@@ -1,0 +1,83 @@
+CS 4264
+Project 4: Network Security
+Part 1. Exploring Network Traces
+
+# Question 1
+
+1.  After analyzing the pcap we discovered that most of the traffic that is coming in has a MAC address of 00:26:08:e5:66:07 which corresponds to an IP address of 10.0.2.1.
+    These are the hosts that sent packets to the local network:
+        - 10.0.2.1 -> 00:26:08:e5:66:07
+        - 10.0.2.2 -> 04:0c:ce:d8:0f:fa
+        - 10.0.2.3 -> 8c:a9:82:50:f0:a6
+                                                                                                   
+# Question 2
+
+2.  The network appears to be a LAN/small personal network. For additional support you can do an address resolution and find where the traffics are going to.
+
+# Question 3
+
+3a.  The host with the ip address of 10.0.2.2 connects to an FTP connection to 194.109.21.66 which links to download.xs4all.nl or dl.xs4all.nl
+
+3b.  Most likely an active FTP, the client uses a PORT command and not a PASV command. In a passive FTP, a PASV would be issued.
+
+3c.  Anyone can easily get all the local hosts who started an outbound FTP connection, the information that is sent over FTP is not encrypted and the credentials are in plain text.
+
+3d.  You can either use SFTP (SSH File Transfer Protocol) or SCP (Session Control Protocol) to provide secure file transfer.
+
+# Question 4
+
+4a.  If you use the following filter tcp.port == 443 && ip.src == 10.0.2.0/24 we see all the outbound http connections. After doing some further analyzing one site that the client is connecting to is pnc.com
+
+4b. There is no way the HTTPS server can protect against any leak of information, the first message sent between the client and the server is not encrypted.
+
+4c. At (21790	171.720176	10.0.2.2	141.211.13.253	TLSv1	246	Client Hello) there are 36 Cipher Suites:
+                Cipher Suite: TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA (0xc00a)
+                Cipher Suite: TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA (0xc014)
+                Cipher Suite: TLS_DHE_RSA_WITH_CAMELLIA_256_CBC_SHA (0x0088)
+                Cipher Suite: TLS_DHE_DSS_WITH_CAMELLIA_256_CBC_SHA (0x0087)
+                Cipher Suite: TLS_DHE_RSA_WITH_AES_256_CBC_SHA (0x0039)
+                Cipher Suite: TLS_DHE_DSS_WITH_AES_256_CBC_SHA (0x0038)
+                Cipher Suite: TLS_ECDH_RSA_WITH_AES_256_CBC_SHA (0xc00f)
+                Cipher Suite: TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA (0xc005)
+                Cipher Suite: TLS_RSA_WITH_CAMELLIA_256_CBC_SHA (0x0084)
+                Cipher Suite: TLS_RSA_WITH_AES_256_CBC_SHA (0x0035)
+                Cipher Suite: TLS_ECDHE_ECDSA_WITH_RC4_128_SHA (0xc007)
+                Cipher Suite: TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA (0xc009)
+                Cipher Suite: TLS_ECDHE_RSA_WITH_RC4_128_SHA (0xc011)
+                Cipher Suite: TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA (0xc013)
+                Cipher Suite: TLS_DHE_RSA_WITH_CAMELLIA_128_CBC_SHA (0x0045)
+                Cipher Suite: TLS_DHE_DSS_WITH_CAMELLIA_128_CBC_SHA (0x0044)
+                Cipher Suite: TLS_DHE_DSS_WITH_RC4_128_SHA (0x0066)
+                Cipher Suite: TLS_DHE_RSA_WITH_AES_128_CBC_SHA (0x0033)
+                Cipher Suite: TLS_DHE_DSS_WITH_AES_128_CBC_SHA (0x0032)
+                Cipher Suite: TLS_ECDH_RSA_WITH_RC4_128_SHA (0xc00c)
+                Cipher Suite: TLS_ECDH_RSA_WITH_AES_128_CBC_SHA (0xc00e)
+                Cipher Suite: TLS_ECDH_ECDSA_WITH_RC4_128_SHA (0xc002)
+                Cipher Suite: TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA (0xc004)
+                Cipher Suite: TLS_RSA_WITH_SEED_CBC_SHA (0x0096)
+                Cipher Suite: TLS_RSA_WITH_CAMELLIA_128_CBC_SHA (0x0041)
+                Cipher Suite: TLS_RSA_WITH_RC4_128_SHA (0x0005)
+                Cipher Suite: TLS_RSA_WITH_RC4_128_MD5 (0x0004)
+                Cipher Suite: TLS_RSA_WITH_AES_128_CBC_SHA (0x002f)
+                Cipher Suite: TLS_ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA (0xc008)
+                Cipher Suite: TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA (0xc012)
+                Cipher Suite: TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA (0x0016)
+                Cipher Suite: TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA (0x0013)
+                Cipher Suite: TLS_ECDH_RSA_WITH_3DES_EDE_CBC_SHA (0xc00d)
+                Cipher Suite: TLS_ECDH_ECDSA_WITH_3DES_EDE_CBC_SHA (0xc003)
+                Cipher Suite: SSL_RSA_FIPS_WITH_3DES_EDE_CBC_SHA (0xfeff)
+                Cipher Suite: TLS_RSA_WITH_3DES_EDE_CBC_SHA (0x000a)
+
+4d.  Cipher Suite TLS_RSA_WITH_RC4_128_MD5 (0x0004) is an unsecure cipher suite because MD5 hashes are vulnerable to attacks such as hash extensions and collisions.
+
+4e. At (21792	171.729764	141.211.13.253	10.0.2.2	TLSv1	1514) we get Server Hello, and after further investigation we see that it chose Cipher Suite: TLS_DHE_RSA_WITH_AES_256_CBC_SHA (0x0039) for the connection.
+ 
+# Question 5
+
+5a. The browser uses cookies to authenticate the user into FaceBook and the cookie can be accessed when the user sends additional HTTP requests.
+
+5b. An attacker could get the user's packets, the request is within the payload and it is in clear text. The attacker then modify the text and impersonate the victim.
+
+5c. The most that the users can do is to always send requests over HTTPS. More can be done on the websites end to make sure that users are safe. 
+
+5d.  The user went to the home page and searched for Zakir Duru and sends an attatchment.
